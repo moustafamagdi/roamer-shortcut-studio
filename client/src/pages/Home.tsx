@@ -42,7 +42,7 @@ import {
   type ShortcutCommand,
 } from "@/lib/xmlEditor";
 
-const BRAND_MARK = "/manus-storage/roamer-mark_e80bd393.png";
+const BRAND_MARK = `${import.meta.env.BASE_URL}roamer-mark.png`;
 const MAX_HISTORY = 30;
 
 function keyParts(shortcut: string) {
