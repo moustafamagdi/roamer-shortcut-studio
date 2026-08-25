@@ -113,6 +113,20 @@ export function normalizeShortcut(value: string) {
   return [...modifiers, normalizedKey].join("+");
 }
 
+export function shortcutFromKeyboardEvent(event: KeyboardEvent) {
+  const modifierKeys = new Set(["Control", "Alt", "Shift", "Meta"]);
+  if (modifierKeys.has(event.key)) return "";
+  const key = event.key === " " ? "Space" : event.key;
+  if (!key || ["Tab", "Enter", "Escape", "Backspace", "Delete"].includes(key)) return "";
+  const parts: string[] = [];
+  if (event.ctrlKey) parts.push("Ctrl");
+  if (event.altKey) parts.push("Alt");
+  if (event.shiftKey) parts.push("Shift");
+  if (event.metaKey) parts.push("Meta");
+  const normalizedKey = key.length === 1 ? key.toUpperCase() : key.toUpperCase();
+  return [...parts, normalizedKey].join("+");
+}
+
 export function shortcutFormatIssue(value: string) {
   const normalized = normalizeShortcut(value);
   if (!normalized) return undefined;

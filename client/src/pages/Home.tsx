@@ -2,7 +2,7 @@
  * Quiet Blueprint style reminder: this is a drafting-board workspace, not a generic form.
  * Keep file state visible, use IBM Plex Mono for XML metadata, and reserve safety orange for deliberate edits.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -34,6 +34,7 @@ import {
   addCommand,
   normalizeShortcut,
   parseXml,
+  shortcutFromKeyboardEvent,
   removeCommand,
   shortcutFormatIssue,
   updateCommandField,
@@ -69,6 +70,7 @@ export default function Home() {
   const [showHelp, setShowHelp] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [shortcutDraft, setShortcutDraft] = useState("");
+  const [isCapturingShortcut, setIsCapturingShortcut] = useState(false);
   const [acceleratorDraft, setAcceleratorDraft] = useState("");
   const [newCommand, setNewCommand] = useState({ categoryId: "", id: "", shortcut: "", accelerator: "", toggle: false });
   const [isDragging, setIsDragging] = useState(false);
@@ -160,6 +162,30 @@ export default function Home() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not update this command.");
     }
+  };
+
+  const captureShortcut = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (!isCapturingShortcut) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.key === "Escape") {
+      setIsCapturingShortcut(false);
+      return;
+    }
+    const captured = shortcutFromKeyboardEvent(event.nativeEvent);
+    if (!captured) {
+      toast.info("Press a key after the modifier, or Escape to cancel.");
+      return;
+    }
+    setShortcutDraft(captured);
+    setIsCapturingShortcut(false);
+    const issue = shortcutFormatIssue(captured);
+    const conflict = parsed.commands.filter(
+      (command) => command.index !== selectedCommand?.index && normalizeShortcut(command.shortcut) === normalizeShortcut(captured),
+    );
+    if (issue) toast.error(issue);
+    else if (conflict.length) toast.error(`Conflict with ${conflict.map((command) => command.id).join(", ")}. Choose another combination.`);
+    else toast.success(`${captured} captured. Press Apply shortcut to save it.`);
   };
 
   const applyShortcutDraft = () => {
@@ -363,7 +389,7 @@ export default function Home() {
             </div>
             {selectedCommand ? <>
               <div className="command-identity"><div className="identity-icon"><Command size={21} /></div><div><div className="identity-label">COMMAND ID</div><div className="identity-id mono">{selectedCommand.id}</div></div><div className="identity-category"><span className="identity-label">CATEGORY</span><strong>{selectedCommand.categoryLabel}</strong></div></div>
-              <div className="field-block"><div className="field-heading"><div><span className="field-number">01</span><div><label htmlFor="shortcut-input">Primary shortcut</label><p>Full key combination used to trigger this command.</p></div></div><Keyboard size={19} /></div><div className="shortcut-input-shell"><div className="keycap-preview">{shortcutDraft ? keyParts(normalizeShortcut(shortcutDraft)).map((part) => <kbd key={part}>{part}</kbd>) : <span className="keycap-placeholder">Not assigned</span>}</div><input id="shortcut-input" value={shortcutDraft} onChange={(event) => setShortcutDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") applyShortcutDraft(); }} placeholder="e.g. Ctrl+Shift+M" /></div>{currentShortcutIssue && <div className="inline-notice notice-warn"><AlertTriangle size={15} /> {currentShortcutIssue}</div>}{conflictCommands.length > 0 && !currentShortcutIssue && <div className="inline-notice notice-danger"><AlertTriangle size={15} /> Conflicts with <strong>{conflictCommands.map((command) => command.id).join(", ")}</strong>.</div>}<div className="field-actions"><span className="field-hint">Press Enter to apply</span><button className="button button-primary" onClick={applyShortcutDraft} disabled={Boolean(currentShortcutIssue || conflictCommands.length)}>Apply shortcut</button></div></div>
+              <div className="field-block"><div className="field-heading"><div><span className="field-number">01</span><div><label htmlFor="shortcut-input">Primary shortcut</label><p>Full key combination used to trigger this command.</p></div></div><Keyboard size={19} /></div><div className={`shortcut-input-shell ${isCapturingShortcut ? "is-capturing" : ""}`}><div className="keycap-preview">{shortcutDraft ? keyParts(normalizeShortcut(shortcutDraft)).map((part) => <kbd key={part}>{part}</kbd>) : <span className="keycap-placeholder">Not assigned</span>}</div><input id="shortcut-input" value={isCapturingShortcut ? "" : shortcutDraft} onChange={(event) => setShortcutDraft(event.target.value)} onKeyDown={(event) => { if (isCapturingShortcut) captureShortcut(event); else if (event.key === "Enter") applyShortcutDraft(); }} placeholder={isCapturingShortcut ? "Press your shortcut now…" : "e.g. Ctrl+Shift+M"} aria-describedby="shortcut-help" /></div><div className="capture-actions"><button className={`capture-button ${isCapturingShortcut ? "is-active" : ""}`} onClick={() => setIsCapturingShortcut((current) => !current)}>{isCapturingShortcut ? <><X size={14} /> Cancel capture</> : <><Keyboard size={14} /> Capture from keyboard</>}</button>{shortcutDraft && <button className="clear-capture" onClick={() => { setShortcutDraft(""); setIsCapturingShortcut(false); }} aria-label="Clear shortcut">Clear</button>}</div><p className="capture-help" id="shortcut-help">{isCapturingShortcut ? "Press modifiers together with a key. Escape cancels." : "Type a combination or use keyboard capture."}</p>{currentShortcutIssue && <div className="inline-notice notice-warn"><AlertTriangle size={15} /> {currentShortcutIssue}</div>}{conflictCommands.length > 0 && !currentShortcutIssue && <div className="inline-notice notice-danger"><AlertTriangle size={15} /> Conflicts with <strong>{conflictCommands.map((command) => command.id).join(", ")}</strong>.</div>}<div className="field-actions"><span className="field-hint">Press Enter to apply</span><button className="button button-primary" onClick={applyShortcutDraft} disabled={Boolean(currentShortcutIssue || conflictCommands.length)}>Apply shortcut</button></div></div>
               <div className="field-block compact-field"><div className="field-heading"><div><span className="field-number">02</span><div><label htmlFor="accelerator-input">Menu accelerator</label><p>Optional single-key menu access hint.</p></div></div></div><div className="accelerator-row"><input id="accelerator-input" className="plain-input mono" value={acceleratorDraft} onChange={(event) => setAcceleratorDraft(event.target.value)} placeholder="e.g. S" /><button className="button button-secondary" onClick={applyAcceleratorDraft}>Apply</button></div></div>
               <div className="field-block compact-field"><div className="field-heading"><div><span className="field-number">03</span><div><label htmlFor="toggle-input">Toggle command</label><p>Marks this command as a stateful UI toggle.</p></div></div><button className={`toggle-switch ${selectedCommand.toggle ? "is-on" : ""}`} id="toggle-input" aria-pressed={selectedCommand.toggle} onClick={() => updateField("toggle", !selectedCommand.toggle)}><span /></button></div></div>
             </> : <div className="empty-editor"><FileCode2 size={32} /><h3>Load an XML file to begin</h3><p>Choose a valid RoamerCommands.xml file or load the sample workspace.</p><button className="button button-secondary" onClick={() => { setXmlText(DEMO_XML); setLastExportedXml(DEMO_XML); setIsDemo(true); }}>Load sample file</button></div>}
