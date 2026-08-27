@@ -2,7 +2,7 @@
  * Quiet Blueprint style reminder: this is a drafting-board workspace, not a generic form.
  * Keep file state visible, use IBM Plex Mono for XML metadata, and reserve safety orange for deliberate edits.
  */
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -47,6 +47,11 @@ const MAX_HISTORY = 30;
 
 function keyParts(shortcut: string) {
   return shortcut ? shortcut.split("+") : [];
+}
+
+function displayName(command: ShortcutCommand) {
+  const raw = command.id.replace(/^RoamerGUI_/, "").replace(/_/g, " ").toLowerCase();
+  return raw.replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function prettyCount(value: number) {
@@ -106,6 +111,14 @@ export default function Home() {
   const newCommandConflict = parsed.commands.find(
     (command) => normalizeShortcut(command.shortcut) === normalizeShortcut(newCommand.shortcut) && normalizeShortcut(newCommand.shortcut),
   );
+  const shortcutOwners = useMemo(() => {
+    const owners = new Map<string, number>();
+    parsed.commands.forEach((command) => {
+      const shortcut = normalizeShortcut(command.shortcut);
+      if (shortcut) owners.set(shortcut, (owners.get(shortcut) ?? 0) + 1);
+    });
+    return owners;
+  }, [parsed.commands]);
 
   useEffect(() => {
     setShortcutDraft(selectedCommand?.shortcut ?? "");
@@ -314,8 +327,9 @@ export default function Home() {
             <span>{dirty ? "Unsaved changes" : "All changes exported"}</span>
           </div>
           <button className="icon-button top-help" aria-label="Show safety notes" onClick={() => setShowHelp((current) => !current)}><CircleHelp size={18} /></button>
+          <button className="button button-secondary header-load" onClick={openFilePicker}><FolderOpen size={15} /> Load XML</button>
           <button className="button button-primary" onClick={downloadXml} disabled={!parsed.valid || errorCount > 0}>
-            <Download size={16} /> Export XML <span className="button-kbd">⌘S</span>
+            <Download size={16} /> Export Safe File <span className="button-kbd">⌘S</span>
           </button>
           <button className="icon-button mobile-menu-button" aria-label="Open menu" onClick={() => setMobileMenu((current) => !current)}><Menu size={18} /></button>
         </div>
@@ -346,6 +360,70 @@ export default function Home() {
           <div className="drop-icon"><UploadCloud size={20} /></div>
           <div className="drop-copy"><strong>{isDemo ? "Load your RoamerCommands.xml" : fileName}</strong><span>{isDemo ? "Drop a file here or browse from your computer" : "Drop another XML file to switch workspaces"}</span></div>
           <div className="drop-meta"><span>LOCAL ONLY</span><span className="drop-separator" /> <span>XML</span><ChevronDown size={15} /></div>
+        </section>
+
+        <section className="reference-toolbar" aria-label="Shortcut filters">
+          <div className="reference-filter"><Search size={16} /><input aria-label="Filter shortcuts" placeholder="Filter shortcuts…" value={query} onChange={(event) => setQuery(event.target.value)} /></div>
+          <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} aria-label="Filter by category">
+            <option value="all">All Categories</option>
+            {parsed.categories.map((category) => <option key={category.id} value={category.id}>{categoryShortLabel(category.label)}</option>)}
+          </select>
+          <div className="reference-file-status"><span className="status-dot" /> <strong>{isDemo ? "RoamerCommands.sample.xml" : fileName}</strong> loaded <span className="status-divider" /> <strong>{prettyCount(parsed.commands.length)}</strong> Definitions</div>
+        </section>
+
+        <section className="reference-shell" aria-label="Shortcut definitions">
+          <aside className="validation-card">
+            <span className="reference-kicker">VALIDATION LOG</span>
+            {warningCount > 0 ? <div className="conflict-card"><strong>Conflict detected</strong><p>{parsed.issues.find((issue) => issue.type === "warning")?.message ?? "Review duplicate shortcut assignments."}</p></div> : <div className="clear-card"><Check size={15} /><strong>No conflicts detected</strong><p>Every shortcut is currently unique.</p></div>}
+            <div className="validation-illustration" aria-hidden="true"><span className="cube-line cube-one" /><span className="cube-line cube-two" /><span className="cube-line cube-three" /></div>
+          </aside>
+          <div className="definition-table-wrap">
+            <div className="definition-table-head"><span>COMMAND ID</span><span>DISPLAY NAME</span><span>SHORTCUT COMBINATION</span><span>STATUS</span></div>
+            <div className="definition-table-body">
+              {filteredCommands.map((command) => {
+                const shortcut = normalizeShortcut(command.shortcut);
+                const isConflict = Boolean(shortcut && (shortcutOwners.get(shortcut) ?? 0) > 1);
+                return <button key={`definition-${command.id}-${command.index}`} className={`definition-row ${isConflict ? "is-conflict" : ""} ${selectedCommand?.index === command.index ? "is-selected" : ""}`} onClick={() => { setSelectedIndex(command.index); setMobileMenu(false); }}>
+                  <span className="definition-id mono">{command.id}</span>
+                  <span className="definition-name"><strong>{displayName(command)}</strong><small>{command.toggle ? "Toggle command" : `Standard ${categoryShortLabel(command.categoryLabel).toLowerCase()}`}</small></span>
+                  <span className="definition-shortcut">{keyParts(shortcut).length ? keyParts(shortcut).map((part, index) => <Fragment key={`${part}-${index}`}><kbd>{part}</kbd>{index < keyParts(shortcut).length - 1 && <i>+</i>}</Fragment>) : <span className="not-set">Not assigned</span>}</span>
+                  <span className={`definition-status ${isConflict ? "conflict" : "default"}`}>{isConflict ? "Conflict" : "Default"}</span>
+                </button>;
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="reference-toolbar" aria-label="Shortcut filters">
+          <div className="reference-filter"><Search size={16} /><input aria-label="Filter shortcuts" placeholder="Filter shortcuts…" value={query} onChange={(event) => setQuery(event.target.value)} /></div>
+          <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} aria-label="Filter by category">
+            <option value="all">All Categories</option>
+            {parsed.categories.map((category) => <option key={category.id} value={category.id}>{categoryShortLabel(category.label)}</option>)}
+          </select>
+          <div className="reference-file-status"><span className="status-dot" /> <strong>{isDemo ? "RoamerCommands.sample.xml" : fileName}</strong> loaded <span className="status-divider" /> <strong>{prettyCount(parsed.commands.length)}</strong> Definitions</div>
+        </section>
+
+        <section className="reference-shell" aria-label="Shortcut definitions">
+          <aside className="validation-card">
+            <span className="reference-kicker">VALIDATION LOG</span>
+            {warningCount > 0 ? <div className="conflict-card"><strong>Conflict detected</strong><p>{parsed.issues.find((issue) => issue.type === "warning")?.message ?? "Review duplicate shortcut assignments."}</p></div> : <div className="clear-card"><Check size={15} /><strong>No conflicts detected</strong><p>Every shortcut is currently unique.</p></div>}
+            <div className="validation-illustration" aria-hidden="true"><span className="cube-line cube-one" /><span className="cube-line cube-two" /><span className="cube-line cube-three" /></div>
+          </aside>
+          <div className="definition-table-wrap">
+            <div className="definition-table-head"><span>COMMAND ID</span><span>DISPLAY NAME</span><span>SHORTCUT COMBINATION</span><span>STATUS</span></div>
+            <div className="definition-table-body">
+              {filteredCommands.map((command) => {
+                const shortcut = normalizeShortcut(command.shortcut);
+                const isConflict = Boolean(shortcut && (shortcutOwners.get(shortcut) ?? 0) > 1);
+                return <button key={`definition-${command.id}-${command.index}`} className={`definition-row ${isConflict ? "is-conflict" : ""} ${selectedCommand?.index === command.index ? "is-selected" : ""}`} onClick={() => { setSelectedIndex(command.index); setMobileMenu(false); }}>
+                  <span className="definition-id mono">{command.id}</span>
+                  <span className="definition-name"><strong>{displayName(command)}</strong><small>{command.toggle ? "Toggle command" : `Standard ${categoryShortLabel(command.categoryLabel).toLowerCase()}`}</small></span>
+                  <span className="definition-shortcut">{keyParts(shortcut).length ? keyParts(shortcut).map((part, index) => <Fragment key={`${part}-${index}`}><kbd>{part}</kbd>{index < keyParts(shortcut).length - 1 && <i>+</i>}</Fragment>) : <span className="not-set">Not assigned</span>}</span>
+                  <span className={`definition-status ${isConflict ? "conflict" : "default"}`}>{isConflict ? "Conflict" : "Default"}</span>
+                </button>;
+              })}
+            </div>
+          </div>
         </section>
 
         <section className="file-safety-note" aria-label="File location and backup guidance">
