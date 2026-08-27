@@ -348,6 +348,17 @@ export default function Home() {
           <div className="drop-meta"><span>LOCAL ONLY</span><span className="drop-separator" /> <span>XML</span><ChevronDown size={15} /></div>
         </section>
 
+        <section className="file-safety-note" aria-label="File location and backup guidance" dir="rtl">
+          <div className="file-safety-icon"><ShieldCheck size={18} /></div>
+          <div className="file-safety-copy">
+            <strong>قبل البدء: خذ نسخة احتياطية من الملف</strong>
+            <p>ابحث عن الملف غالبًا في أحد المسارين التاليين على Windows:</p>
+            <code dir="ltr">C:\Program Files\Autodesk\Navisworks Manage 20XX\Layout\RoamerCommands.xml</code>
+            <code dir="ltr">C:\Program Files\Autodesk\Navisworks Simulate 20XX\Layout\RoamerCommands.xml</code>
+            <p>استبدل <bdi>20XX</bdi> برقم الإصدار الموجود لديك. انسخ الملف الأصلي إلى مجلد آمن قبل التعديل؛ التصدير هنا ينشئ ملفًا جديدًا ولا يستبدل الملف الأصلي.</p>
+          </div>
+        </section>
+
         <section className="stat-strip" aria-label="File summary">
           <div className="stat-cell"><span className="stat-label">FILE</span><strong className="mono truncate">{fileName}</strong></div>
           <div className="stat-cell"><span className="stat-label">COMMANDS</span><strong>{prettyCount(parsed.commands.length)}</strong></div>
