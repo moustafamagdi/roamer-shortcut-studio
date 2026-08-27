@@ -233,3 +233,9 @@ body { background: #fbfcfe; color: var(--reference-ink); }
 .workspace-grid { margin-top: 24px; }
 @media (max-width: 920px) { .reference-shell { grid-template-columns: 1fr; }.validation-card { min-height: auto; }.validation-illustration { display: none; }.reference-file-status { justify-self: start; grid-column: 1 / -1; } }
 @media (max-width: 680px) { .topbar { padding: 0 16px; }.header-load { display: none; }.workspace { padding: 18px 14px 40px; }.reference-toolbar { grid-template-columns: 1fr; }.reference-file-status { font-size: 11px; }.definition-table-wrap { overflow-x: auto; }.definition-table-head, .definition-row { min-width: 720px; }.definition-table-head { padding: 0 16px; }.definition-row { padding: 0 16px; }.workspace-grid { margin-top: 18px; } }
+
+/* Keep the reference table primary; reveal legacy editing controls only on deliberate row selection. */
+.editor-drawer { display: none; }
+.editor-drawer.is-open { display: grid; }
+.editor-drawer .editor-header { position: sticky; top: 0; z-index: 2; background: rgba(255,255,255,.96); backdrop-filter: blur(10px); }
+@media (max-width: 680px) { .editor-drawer.is-open { display: block; } .editor-drawer.is-open .command-index { display: none; } .editor-drawer.is-open .editor-column { width: 100%; } }

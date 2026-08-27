@@ -74,6 +74,7 @@ export default function Home() {
   const [showAdd, setShowAdd] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [showEditorPanel, setShowEditorPanel] = useState(false);
   const [shortcutDraft, setShortcutDraft] = useState("");
   const [isCapturingShortcut, setIsCapturingShortcut] = useState(false);
   const [acceleratorDraft, setAcceleratorDraft] = useState("");
@@ -383,39 +384,7 @@ export default function Home() {
               {filteredCommands.map((command) => {
                 const shortcut = normalizeShortcut(command.shortcut);
                 const isConflict = Boolean(shortcut && (shortcutOwners.get(shortcut) ?? 0) > 1);
-                return <button key={`definition-${command.id}-${command.index}`} className={`definition-row ${isConflict ? "is-conflict" : ""} ${selectedCommand?.index === command.index ? "is-selected" : ""}`} onClick={() => { setSelectedIndex(command.index); setMobileMenu(false); }}>
-                  <span className="definition-id mono">{command.id}</span>
-                  <span className="definition-name"><strong>{displayName(command)}</strong><small>{command.toggle ? "Toggle command" : `Standard ${categoryShortLabel(command.categoryLabel).toLowerCase()}`}</small></span>
-                  <span className="definition-shortcut">{keyParts(shortcut).length ? keyParts(shortcut).map((part, index) => <Fragment key={`${part}-${index}`}><kbd>{part}</kbd>{index < keyParts(shortcut).length - 1 && <i>+</i>}</Fragment>) : <span className="not-set">Not assigned</span>}</span>
-                  <span className={`definition-status ${isConflict ? "conflict" : "default"}`}>{isConflict ? "Conflict" : "Default"}</span>
-                </button>;
-              })}
-            </div>
-          </div>
-        </section>
-
-        <section className="reference-toolbar" aria-label="Shortcut filters">
-          <div className="reference-filter"><Search size={16} /><input aria-label="Filter shortcuts" placeholder="Filter shortcuts…" value={query} onChange={(event) => setQuery(event.target.value)} /></div>
-          <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} aria-label="Filter by category">
-            <option value="all">All Categories</option>
-            {parsed.categories.map((category) => <option key={category.id} value={category.id}>{categoryShortLabel(category.label)}</option>)}
-          </select>
-          <div className="reference-file-status"><span className="status-dot" /> <strong>{isDemo ? "RoamerCommands.sample.xml" : fileName}</strong> loaded <span className="status-divider" /> <strong>{prettyCount(parsed.commands.length)}</strong> Definitions</div>
-        </section>
-
-        <section className="reference-shell" aria-label="Shortcut definitions">
-          <aside className="validation-card">
-            <span className="reference-kicker">VALIDATION LOG</span>
-            {warningCount > 0 ? <div className="conflict-card"><strong>Conflict detected</strong><p>{parsed.issues.find((issue) => issue.type === "warning")?.message ?? "Review duplicate shortcut assignments."}</p></div> : <div className="clear-card"><Check size={15} /><strong>No conflicts detected</strong><p>Every shortcut is currently unique.</p></div>}
-            <div className="validation-illustration" aria-hidden="true"><span className="cube-line cube-one" /><span className="cube-line cube-two" /><span className="cube-line cube-three" /></div>
-          </aside>
-          <div className="definition-table-wrap">
-            <div className="definition-table-head"><span>COMMAND ID</span><span>DISPLAY NAME</span><span>SHORTCUT COMBINATION</span><span>STATUS</span></div>
-            <div className="definition-table-body">
-              {filteredCommands.map((command) => {
-                const shortcut = normalizeShortcut(command.shortcut);
-                const isConflict = Boolean(shortcut && (shortcutOwners.get(shortcut) ?? 0) > 1);
-                return <button key={`definition-${command.id}-${command.index}`} className={`definition-row ${isConflict ? "is-conflict" : ""} ${selectedCommand?.index === command.index ? "is-selected" : ""}`} onClick={() => { setSelectedIndex(command.index); setMobileMenu(false); }}>
+                return <button key={`definition-${command.id}-${command.index}`} className={`definition-row ${isConflict ? "is-conflict" : ""} ${selectedCommand?.index === command.index ? "is-selected" : ""}`} onClick={() => { setSelectedIndex(command.index); setMobileMenu(false); setShowEditorPanel(true); }}>
                   <span className="definition-id mono">{command.id}</span>
                   <span className="definition-name"><strong>{displayName(command)}</strong><small>{command.toggle ? "Toggle command" : `Standard ${categoryShortLabel(command.categoryLabel).toLowerCase()}`}</small></span>
                   <span className="definition-shortcut">{keyParts(shortcut).length ? keyParts(shortcut).map((part, index) => <Fragment key={`${part}-${index}`}><kbd>{part}</kbd>{index < keyParts(shortcut).length - 1 && <i>+</i>}</Fragment>) : <span className="not-set">Not assigned</span>}</span>
@@ -445,7 +414,7 @@ export default function Home() {
           <div className="stat-cell stat-action-cell"><span className="stat-label">HISTORY</span><button className="text-button" onClick={undo} disabled={!history.length}><Undo2 size={14} /> Undo {history.length ? `(${history.length})` : ""}</button></div>
         </section>
 
-        <div className="workspace-grid">
+        <div className={`workspace-grid editor-drawer ${showEditorPanel ? "is-open" : ""}`} aria-hidden={!showEditorPanel}>
           <aside className={`command-index ${mobileMenu ? "mobile-open" : ""}`}>
             <div className="panel-heading">
               <div><span className="panel-kicker">INDEX / 01</span><h2>Commands</h2></div>
@@ -461,7 +430,7 @@ export default function Home() {
             </div>
             <div className="command-list" role="listbox" aria-label="Commands">
               {filteredCommands.length ? filteredCommands.map((command) => (
-                <button key={`${command.id}-${command.index}`} className={`command-row ${selectedCommand?.index === command.index ? "is-selected" : ""}`} onClick={() => { setSelectedIndex(command.index); setMobileMenu(false); }} role="option" aria-selected={selectedCommand?.index === command.index}>
+                <button key={`${command.id}-${command.index}`} className={`command-row ${selectedCommand?.index === command.index ? "is-selected" : ""}`} onClick={() => { setSelectedIndex(command.index); setMobileMenu(false); setShowEditorPanel(true); }} role="option" aria-selected={selectedCommand?.index === command.index}>
                   <span className="row-index">{String(command.index + 1).padStart(2, "0")}</span>
                   <span className="row-details"><strong>{command.id}</strong><small>{command.categoryLabel}</small></span>
                   <span className="row-shortcut">{command.shortcut ? keyParts(command.shortcut).map((part) => <kbd key={part}>{part}</kbd>) : <span className="not-set">—</span>}</span>
@@ -474,7 +443,7 @@ export default function Home() {
           <section className="editor-column">
             <div className="editor-header">
               <div><span className="panel-kicker">EDITOR / {selectedCommand ? String(selectedCommand.index + 1).padStart(2, "0") : "—"}</span><h2>{selectedCommand ? "Command details" : "No command selected"}</h2></div>
-              {selectedCommand && <div className="editor-header-actions"><span className="kind-pill">{selectedCommand.kind}</span><button className="danger-button" onClick={handleRemove}><Trash2 size={15} /> Remove</button></div>}
+              {selectedCommand && <div className="editor-header-actions"><span className="kind-pill">{selectedCommand.kind}</span><button className="danger-button" onClick={handleRemove}><Trash2 size={15} /> Remove</button><button className="icon-button" onClick={() => setShowEditorPanel(false)} aria-label="Close editor"><X size={17} /></button></div>}
             </div>
             {selectedCommand ? <>
               <div className="command-identity"><div className="identity-icon"><Command size={21} /></div><div><div className="identity-label">COMMAND ID</div><div className="identity-id mono">{selectedCommand.id}</div></div><div className="identity-category"><span className="identity-label">CATEGORY</span><strong>{selectedCommand.categoryLabel}</strong></div></div>
