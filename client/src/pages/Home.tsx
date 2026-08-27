@@ -348,14 +348,14 @@ export default function Home() {
           <div className="drop-meta"><span>LOCAL ONLY</span><span className="drop-separator" /> <span>XML</span><ChevronDown size={15} /></div>
         </section>
 
-        <section className="file-safety-note" aria-label="File location and backup guidance" dir="rtl">
+        <section className="file-safety-note" aria-label="File location and backup guidance">
           <div className="file-safety-icon"><ShieldCheck size={18} /></div>
           <div className="file-safety-copy">
-            <strong>قبل البدء: خذ نسخة احتياطية من الملف</strong>
-            <p>ابحث عن الملف غالبًا في أحد المسارين التاليين على Windows:</p>
-            <code dir="ltr">C:\Program Files\Autodesk\Navisworks Manage 20XX\Layout\RoamerCommands.xml</code>
-            <code dir="ltr">C:\Program Files\Autodesk\Navisworks Simulate 20XX\Layout\RoamerCommands.xml</code>
-            <p>استبدل <bdi>20XX</bdi> برقم الإصدار الموجود لديك. انسخ الملف الأصلي إلى مجلد آمن قبل التعديل؛ التصدير هنا ينشئ ملفًا جديدًا ولا يستبدل الملف الأصلي.</p>
+            <strong>Before you begin: make a backup copy</strong>
+            <p>On Windows, the file is usually located in one of these folders:</p>
+            <code>C:\Program Files\Autodesk\Navisworks Manage 20XX\Layout\RoamerCommands.xml</code>
+            <code>C:\Program Files\Autodesk\Navisworks Simulate 20XX\Layout\RoamerCommands.xml</code>
+            <p>Replace <bdi>20XX</bdi> with your installed version. Copy the original file to a safe folder before editing; Export XML creates a new file and never overwrites the original.</p>
           </div>
         </section>
 

@@ -161,7 +161,7 @@ h1 em { color: var(--navy); font-style: normal; text-decoration: underline; text
 @media (max-width: 480px) { .button-primary { min-width: 84px; padding: 0 8px; font-size: 11px; white-space: nowrap; }.button-kbd { display: none; }.brand-name { font-size: 12px; gap: 4px; letter-spacing: .045em; }.command-identity { align-items: flex-start; }.identity-category { display: none; }.shortcut-input-shell { align-items: stretch; flex-direction: column; }.keycap-preview { min-width: 0; padding: 0 0 9px; border-right: 0; border-bottom: 1px solid var(--border); }.add-grid { grid-template-columns: 1fr; }.drop-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.drop-meta { width: 100%; margin-left: 54px; } }
 
 /* Quiet Blueprint safety guidance: treat the backup instruction as an operational checkpoint, not decoration. */
-.file-safety-note { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 13px; align-items: start; margin-top: 10px; padding: 15px 17px; border: 1px solid #e8c187; border-right: 3px solid var(--orange); background: #fff9ef; direction: rtl; text-align: right; }
+.file-safety-note { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 13px; align-items: start; margin-top: 10px; padding: 15px 17px; border: 1px solid #e8c187; border-right: 3px solid var(--orange); background: #fff9ef; direction: ltr; text-align: left; }
 .file-safety-icon { width: 31px; height: 31px; display: grid; place-items: center; color: #a05b1f; border: 1px solid #e8c187; background: #fff0d2; }
 .file-safety-copy { display: grid; gap: 6px; min-width: 0; }
 .file-safety-copy strong { color: #7f481f; font-size: 12px; }
